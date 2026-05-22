@@ -46,6 +46,7 @@ export function NavUser() {
 					name: user.full_name,
 					email: user.email,
 					username: user.username,
+					role: user.role,
 				});
 			} catch (error) {
 				console.error("Error fetching user data:", error);
@@ -59,6 +60,7 @@ export function NavUser() {
 				name: user.name,
 				email: user.email,
 				username: user.username,
+				role: user.role,
 			});
 		} else {
 			// fallback → API (optional)
@@ -122,7 +124,7 @@ export function NavUser() {
 						<DropdownMenuGroup>
 							<DropdownMenuItem>
 								<CircleUserRoundIcon />
-								<Link href='/admin/accounts' className='w-full'>
+								<Link href={userData?.role === 'admin' ? '/admin/accounts' : '/member/profile'} className='w-full'>
 									Account
 								</Link>
 							</DropdownMenuItem>

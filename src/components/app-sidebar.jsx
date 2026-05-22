@@ -14,7 +14,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboardIcon, UsersIcon, FolderKanbanIcon, ListChecksIcon, UserCircleIcon, UserPlusIcon, BarChart3Icon, CommandIcon } from "lucide-react";
+import { LayoutDashboardIcon, UsersIcon, FolderKanbanIcon, ListChecksIcon, UserCircleIcon, UserPlusIcon, BarChart3Icon, CommandIcon, MessageSquareIcon } from "lucide-react";
 
 const data = {
 	navMain: [
@@ -25,6 +25,7 @@ const data = {
 		{ title: "Team Members", url: "/admin/team-members", icon: <UserCircleIcon /> },
 		{ title: "Create Users", url: "/admin/create-user", icon: <UserPlusIcon /> },
 		{ title: "Progress Tracker", url: "/admin/progress", icon: <BarChart3Icon /> },
+		{ title: "Messages", url: "/admin/messages", icon: <MessageSquareIcon /> },
 	],
 };
 

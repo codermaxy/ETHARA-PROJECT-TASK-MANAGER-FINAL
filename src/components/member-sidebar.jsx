@@ -3,6 +3,7 @@
 import * as React from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
+import { StreakCard } from "@/components/app_component/member/dashboard/streakCard";
 import {
 	Sidebar,
 	SidebarContent,
@@ -12,7 +13,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboardIcon, ListChecksIcon, CommandIcon } from "lucide-react";
+import { LayoutDashboardIcon, ListChecksIcon, MessageSquareIcon, CommandIcon, FolderKanbanIcon, UsersIcon } from "lucide-react";
 
 const navItems = [
 	{
@@ -21,9 +22,24 @@ const navItems = [
 		icon: <LayoutDashboardIcon />,
 	},
 	{
+		title: "My Projects",
+		url: "/member/projects",
+		icon: <FolderKanbanIcon />,
+	},
+	{
 		title: "My Tasks",
 		url: "/member/tasks",
 		icon: <ListChecksIcon />,
+	},
+	{
+		title: "My Team",
+		url: "/member/team",
+		icon: <UsersIcon />,
+	},
+	{
+		title: "Messages",
+		url: "/member/messages",
+		icon: <MessageSquareIcon />,
 	},
 ];
 
@@ -44,6 +60,7 @@ export function MemberSidebar({ ...props }) {
 			</SidebarHeader>
 			<SidebarContent>
 				<NavMain items={navItems} />
+				<StreakCard />
 			</SidebarContent>
 			<SidebarFooter>
 				<NavUser />

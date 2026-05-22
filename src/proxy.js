@@ -68,9 +68,9 @@ function handleCors(request, response) {
 export default async function proxy(request) {
 	const currentPath = request.nextUrl.pathname;
 
-	// ========================
-	// 1. API CORS
-	// ========================
+
+
+
 	if (currentPath.startsWith("/api/")) {
 		if (request.method === "OPTIONS") {
 			return handleCors(request, new NextResponse(null, { status: 204 }));
@@ -85,6 +85,8 @@ export default async function proxy(request) {
 
 	const publicPaths = [
 		"/auth/login",
+		"/auth/signup",
+		"/auth/admin-signup",
 		"/auth/register",
 		"/auth/reset-email",
 		"/auth/reset-password",
@@ -102,11 +104,14 @@ export default async function proxy(request) {
 		return loginUrl;
 	};
 
-	// ========================
-	// 2. Public Routes
-	// ========================
+
+
+
 	if (isPublicRoute) {
-		if (accessToken && sessionId) {
+
+		const isLoginPage = normalizedPath === "/auth/login" || normalizedPath === "/auth/signup" || normalizedPath === "/auth/admin-signup";
+
+		if (accessToken && sessionId && isLoginPage) {
 			try {
 				const decoded = jwt.verify(accessToken, process.env.TOKEN_SECRET);
 
@@ -129,11 +134,11 @@ export default async function proxy(request) {
 		return NextResponse.next();
 	}
 
-	// ========================
-	// 3. Protected Routes
-	// ========================
 
-	// ✅ FIXED CONDITION
+
+
+
+
 	if (!accessToken || !sessionId) {
 		return NextResponse.redirect(buildLoginUrl());
 	}
@@ -156,9 +161,9 @@ export default async function proxy(request) {
 			return clearAuthCookies(NextResponse.redirect(buildLoginUrl()));
 		}
 
-		// ========================
-		// ✅ UPDATE lastActive
-		// ========================
+
+
+
 		try {
 			const session = await SessionModel.findById(sessionId);
 
@@ -166,7 +171,7 @@ export default async function proxy(request) {
 				const now = Date.now();
 				const last = new Date(session.lastActive).getTime();
 
-				// update every 30 sec (optimized)
+
 				if (now - last > 30000) {
 					await SessionModel.findByIdAndUpdate(sessionId, {
 						lastActive: new Date(),
@@ -177,12 +182,12 @@ export default async function proxy(request) {
 			console.error("Session update failed:", err.message);
 		}
 
-		// ========================
-		// ROLE CHECKS
-		// ========================
+
+
+
 
 		if (normalizedPath.startsWith("/admin")) {
-			if (!user.isAdmin) {
+			if (user.role !== "admin" && !user.isAdmin) {
 				return NextResponse.redirect(new URL("/unauthorized", request.url));
 			}
 			return NextResponse.next();
@@ -195,7 +200,7 @@ export default async function proxy(request) {
 			return NextResponse.next();
 		}
 
-		// Root redirect
+
 		if (normalizedPath === "/") {
 			if (user.isAdmin) {
 				return NextResponse.redirect(new URL("/admin/dashboard", request.url));
@@ -205,7 +210,7 @@ export default async function proxy(request) {
 
 		return NextResponse.next();
 	} catch (error) {
-		console.error("Middleware error:", error);
+		console.error("Proxy error:", error);
 		return clearAuthCookies(NextResponse.redirect(buildLoginUrl()));
 	}
 }

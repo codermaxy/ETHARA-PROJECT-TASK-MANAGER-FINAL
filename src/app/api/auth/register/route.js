@@ -12,7 +12,7 @@ export async function POST(request, response) {
 		const reqBody = await request.json();
 		const parsed_data = registerSchema.safeParse(reqBody);
 		if (!parsed_data.success) {
-			const error = parsed_data.error.issues[0]?.message; // If you only want the first error then use
+			const error = parsed_data.error.issues[0]?.message;
 			return NextResponse.json({ errors: error }, { status: 400 });
 		}
 		const {
@@ -36,7 +36,7 @@ export async function POST(request, response) {
 				{ status: 409 },
 			);
 		}
-		// only 2 admin in a single organization
+
 		if (role === "admin") {
 			const admin_count = await UsersModel.countDocuments({
 				company,
@@ -60,6 +60,8 @@ export async function POST(request, response) {
 			company,
 			job_title,
 			department,
+			isverified: true,
+			isAdmin: role === "admin",
 		});
 		const saved_user = await newUser.save();
 		const user_response = await UsersModel.findById(saved_user._id).select(
@@ -67,13 +69,18 @@ export async function POST(request, response) {
 		);
 		logger.info(`User registered successfully: ${saved_user._id}`);
 		if (role === "admin") {
-			await sendEmail({
-				email,
-				emailType: "VERIFY",
-				userId: saved_user._id,
-				username,
-			});
-			console.log("Verification email sent to:", email);
+			try {
+				await sendEmail({
+					email,
+					emailType: "VERIFY",
+					userId: saved_user._id,
+					username,
+				});
+				console.log("Verification email sent to:", email);
+			} catch (emailError) {
+				logger.error("Failed to send verification email:", emailError);
+				console.error("Email sending failed but user was created.");
+			}
 		}
 
 		return NextResponse.json(

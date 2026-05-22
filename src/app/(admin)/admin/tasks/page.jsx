@@ -42,6 +42,7 @@ const EMPTY_FORM = {
 	title: "",
 	description: "",
 	status: "todo",
+	priority: "Medium",
 	assignedTo: "",
 	projectId: "",
 	dueDate: "",
@@ -98,6 +99,12 @@ export default function TasksPage() {
 		fetchTasks();
 		get_projects_api().then((d) => setProjects(d.projects)).catch(console.error);
 		get_teams_api().then((d) => setTeams(d.teams)).catch(console.error);
+		if (typeof window !== "undefined") {
+			const query = new URLSearchParams(window.location.search).get("search");
+			if (query) {
+				setSearchQuery(query);
+			}
+		}
 	}, []);
 
 	// Auto-select all members when team changes
@@ -141,6 +148,7 @@ export default function TasksPage() {
 					title: formData.title,
 					description: formData.description,
 					status: formData.status,
+					priority: formData.priority,
 					projectId: formData.projectId,
 					dueDate: formData.dueDate,
 					assignToTeam: true,
@@ -337,8 +345,8 @@ export default function TasksPage() {
 							/>
 						</div>
 
-						{/* Status + Due date */}
-						<div className="grid grid-cols-2 gap-4">
+						{/* Status + Priority + Due date */}
+						<div className="grid grid-cols-3 gap-4">
 							<div className="space-y-1.5">
 								<Label>Status</Label>
 								<Select
@@ -350,6 +358,20 @@ export default function TasksPage() {
 										<SelectItem value="todo">To Do</SelectItem>
 										<SelectItem value="in-progress">In Progress</SelectItem>
 										<SelectItem value="done">Done</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-1.5">
+								<Label>Priority</Label>
+								<Select
+									value={formData.priority}
+									onValueChange={(v) => setFormData({ ...formData, priority: v })}
+								>
+									<SelectTrigger><SelectValue /></SelectTrigger>
+									<SelectContent>
+										<SelectItem value="High" className="text-red-600 font-bold">High</SelectItem>
+										<SelectItem value="Medium" className="text-amber-600 font-bold">Medium</SelectItem>
+										<SelectItem value="Low" className="text-emerald-600 font-bold">Low</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>

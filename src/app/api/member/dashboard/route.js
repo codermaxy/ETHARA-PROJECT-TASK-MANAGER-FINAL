@@ -3,6 +3,7 @@ import { connectionDb } from "@/config/db_config";
 import Task from "@/models/task.model";
 import Project from "@/models/projects.model";
 import User from "@/models/users.model";
+import Team from "@/models/teams.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 
@@ -19,12 +20,15 @@ export async function GET(request) {
 
 		const memberId = user._id;
 
-		const [totalTasks, todoTasks, inProgressTasks, doneTasks, overdueTasks] = await Promise.all([
+		const [totalTasks, todoTasks, inProgressTasks, doneTasks, overdueTasks, highTasks, mediumTasks, lowTasks] = await Promise.all([
 			Task.countDocuments({ assignedTo: memberId }),
 			Task.countDocuments({ assignedTo: memberId, status: "todo" }),
 			Task.countDocuments({ assignedTo: memberId, status: "in-progress" }),
 			Task.countDocuments({ assignedTo: memberId, status: "done" }),
 			Task.countDocuments({ assignedTo: memberId, status: { $ne: "done" }, dueDate: { $lt: new Date() } }),
+			Task.countDocuments({ assignedTo: memberId, priority: "High" }),
+			Task.countDocuments({ assignedTo: memberId, priority: "Medium" }),
+			Task.countDocuments({ assignedTo: memberId, priority: "Low" }),
 		]);
 
 		// Recent 5 tasks
@@ -75,7 +79,7 @@ export async function GET(request) {
 				department: user.department,
 				team: user.teamId,
 			},
-			stats: { totalTasks, todoTasks, inProgressTasks, doneTasks, overdueTasks },
+			stats: { totalTasks, todoTasks, inProgressTasks, doneTasks, overdueTasks, highTasks, mediumTasks, lowTasks },
 			taskProgress: Object.values(progressMap),
 			recentTasks,
 		});

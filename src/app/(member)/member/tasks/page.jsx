@@ -79,7 +79,15 @@ export default function MemberTasksPage() {
 		}
 	}, []);
 
-	useEffect(() => { fetchTasks(); }, [fetchTasks]);
+	useEffect(() => {
+		fetchTasks();
+		if (typeof window !== "undefined") {
+			const query = new URLSearchParams(window.location.search).get("search");
+			if (query) {
+				setSearch(query);
+			}
+		}
+	}, [fetchTasks]);
 
 	const handleStatusChange = useCallback(async (taskId, newStatus) => {
 		try {

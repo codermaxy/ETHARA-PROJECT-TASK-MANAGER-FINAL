@@ -12,17 +12,35 @@ export async function POST(request) {
 		await connectionDb();
 
 		const reqBody = await request.json();
-		let { username, email, password } = loginSchema.parse(reqBody);
+		const parsedData = loginSchema.parse(reqBody);
+		const { password } = parsedData;
+		const selectedRole = reqBody.role;
+		const email = "email" in parsedData ? parsedData.email : undefined;
+		const username = "username" in parsedData ? parsedData.username : undefined;
 
-		const existingUser = await UsersModel.findOne({
-			$or: [{ email }, { username }],
-		});
+		const query = email ? { email } : { username };
+		const existingUser = await UsersModel.findOne(query);
 
 		if (!existingUser) {
 			return NextResponse.json(
 				{ message: "User does not exist" },
 				{ status: 400 },
 			);
+		}
+
+
+		if (selectedRole && existingUser.role !== selectedRole) {
+			return NextResponse.json(
+				{ message: `Access denied: This account is registered as a ${existingUser.role}, not a ${selectedRole}.` },
+				{ status: 403 },
+			);
+		}
+
+
+		if (existingUser.role === "admin" && !existingUser.isAdmin) {
+			existingUser.isAdmin = true;
+			await existingUser.save();
+			console.log("Auto-fixed isAdmin status for:", existingUser.email);
 		}
 
 		if (!existingUser.isverified) {
@@ -41,7 +59,7 @@ export async function POST(request) {
 			return NextResponse.json({ message: "Wrong password!" }, { status: 400 });
 		}
 
-		// ✅ Generate tokens
+
 		const tokenData = {
 			id: existingUser._id,
 			role: existingUser.role,
@@ -56,14 +74,14 @@ export async function POST(request) {
 			expiresIn: "5d",
 		});
 
-		// Store refresh token in database
+
 		await UsersModel.findByIdAndUpdate(existingUser._id, {
 			refreshToken,
 		});
 
-		// =========================
-		// ✅ SESSION LOGIC START
-		// =========================
+
+
+
 
 		const ua = new UAParser(request.headers.get("user-agent"));
 		const device = ua.getDevice().model || "Desktop";
@@ -74,13 +92,13 @@ export async function POST(request) {
 			request.headers.get("x-real-ip") ||
 			"unknown";
 
-		// ❗ Mark old sessions inactive
+
 		await SessionModel.updateMany(
 			{ userId: existingUser._id },
 			{ isCurrent: false },
 		);
 
-		// ✅ Create new session
+
 		const session = await SessionModel.create({
 			userId: existingUser._id,
 			device,
@@ -90,14 +108,14 @@ export async function POST(request) {
 			isCurrent: true,
 		});
 
-		// get all sessions sorted newest first
+
 		const sessions = await SessionModel.find({
 			userId: existingUser._id,
 		}).sort({ createdAt: -1 });
 
-		// if more than 5 → delete old ones
+
 		if (sessions.length > 5) {
-			const sessionsToDelete = sessions.slice(5); // keep first 5
+			const sessionsToDelete = sessions.slice(5);
 
 			const ids = sessionsToDelete.map((s) => s._id);
 
@@ -106,9 +124,9 @@ export async function POST(request) {
 			});
 		}
 
-		// =========================
-		// RESPONSE
-		// =========================
+
+
+
 
 		const response = NextResponse.json({
 			message: "Logged In Successfully",
@@ -123,7 +141,7 @@ export async function POST(request) {
 				company: existingUser.company,
 				joined: existingUser.createdAt,
 			},
-			sessionId: session._id, // ✅ important
+			sessionId: session._id,
 		});
 
 		response.cookies.set("token", token, {
@@ -152,9 +170,9 @@ export async function POST(request) {
 
 		return response;
 	} catch (error) {
-		console.error("Login error:", error);
+		console.error("Login error detail:", error);
 		return NextResponse.json(
-			{ error: "Authentication failed" },
+			{ message: error.message || "Internal server error" },
 			{ status: 500 },
 		);
 	}

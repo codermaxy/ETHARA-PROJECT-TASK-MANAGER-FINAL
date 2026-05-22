@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectionDb } from "@/config/db_config";
 import User from "@/models/users.model";
+import Team from "@/models/teams.model";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
@@ -13,7 +14,7 @@ async function requireAdmin() {
 	if (!token) return null;
 	const decoded = verify(token, process.env.TOKEN_SECRET);
 	const user = await User.findById(decoded.id);
-	if (!user || user.role !== "admin") return null;
+	if (!user || (user.role !== "admin" && !user.isAdmin)) return null;
 	return user;
 }
 
@@ -31,7 +32,7 @@ export async function GET(request) {
 		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
-		if (!user || user.role !== "admin") {
+		if (!user) {
 			return NextResponse.json({ error: "Access denied" }, { status: 403 });
 		}
 
@@ -41,7 +42,14 @@ export async function GET(request) {
 		const search = searchParams.get("search") || "";
 		const skip = (page - 1) * limit;
 
-		const query = { role: { $in: ["member"] } };
+		let query = {};
+		if (user.role === "admin" || user.isAdmin) {
+			// Admin can see everyone
+			query = {}; 
+		} else {
+			// Members can only see Admins (to chat with support/management)
+			query = { role: "admin" };
+		}
 		if (search) {
 			query.$or = [
 				{ full_name: { $regex: search, $options: "i" } },

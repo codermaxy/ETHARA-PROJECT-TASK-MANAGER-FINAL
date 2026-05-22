@@ -18,7 +18,7 @@ export async function GET(request) {
 		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
-		if (!user || user.role !== "admin") {
+		if (!user || (user.role !== "admin" && !user.isAdmin)) {
 			return NextResponse.json({ error: "Access denied" }, { status: 403 });
 		}
 
@@ -51,12 +51,12 @@ export async function POST(request) {
 		const decoded = verify(token, process.env.TOKEN_SECRET);
 		const user = await User.findById(decoded.id);
 
-		if (!user || user.role !== "admin") {
+		if (!user || (user.role !== "admin" && !user.isAdmin)) {
 			return NextResponse.json({ error: "Access denied" }, { status: 403 });
 		}
 
 		const body = await request.json();
-		const { title, description, status, projectId, dueDate } = body;
+		const { title, description, status, priority, projectId, dueDate } = body;
 
 		if (!title || !projectId) {
 			return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(request) {
 						title,
 						description,
 						status: status || "todo",
+						priority: priority || "Medium",
 						assignedTo: memberId,
 						projectId,
 						dueDate,
@@ -99,6 +100,7 @@ export async function POST(request) {
 			title,
 			description,
 			status: status || "todo",
+			priority: priority || "Medium",
 			assignedTo: body.assignedTo,
 			projectId,
 			dueDate,

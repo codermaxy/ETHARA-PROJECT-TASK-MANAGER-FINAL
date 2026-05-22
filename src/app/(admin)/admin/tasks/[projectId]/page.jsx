@@ -44,6 +44,9 @@ import {
 	PlusIcon,
 	FolderKanbanIcon,
 	UsersIcon,
+	EyeIcon,
+	ClockIcon,
+	UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -66,6 +69,7 @@ export default function ProjectTasksPage() {
 
 	// Dialog
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [viewingTask, setViewingTask] = useState(null);
 	const [editingTask, setEditingTask] = useState(null);
 	const [formData, setFormData] = useState(EMPTY_FORM);
 	const [saving, setSaving] = useState(false);
@@ -294,6 +298,15 @@ export default function ProjectTasksPage() {
 												<Button
 													size="icon"
 													variant="ghost"
+													className="h-8 w-8 text-primary hover:text-primary"
+													onClick={() => setViewingTask(task)}
+													title="View Member Updates"
+												>
+													<EyeIcon className="h-4 w-4" />
+												</Button>
+												<Button
+													size="icon"
+													variant="ghost"
 													className="h-8 w-8"
 													onClick={() => openEdit(task)}
 												>
@@ -424,6 +437,46 @@ export default function ProjectTasksPage() {
 							{saving ? "Saving…" : editingTask ? "Update Task" : "Create Task"}
 						</Button>
 					</form>
+				</DialogContent>
+			</Dialog>
+
+			{/* Member Updates Dialog */}
+			<Dialog open={!!viewingTask} onOpenChange={() => setViewingTask(null)}>
+				<DialogContent className="max-w-xl">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<ClockIcon className="size-5 text-primary" />
+							Member Updates
+						</DialogTitle>
+						<DialogDescription>
+							Review all notes and progress shared by members for: <span className="font-bold text-foreground">{viewingTask?.title}</span>
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+						{viewingTask?.updates?.length === 0 ? (
+							<div className="text-center py-12 border-2 border-dashed rounded-2xl">
+								<p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">No updates yet</p>
+							</div>
+						) : (
+							viewingTask?.updates?.map((update, idx) => (
+								<div key={idx} className="flex gap-4 p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
+									<div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+										<UserIcon className="size-5 text-primary" />
+									</div>
+									<div className="space-y-1">
+										<p className="text-sm font-bold text-foreground leading-tight">{update.note}</p>
+										<div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+											<span>By Member</span>
+											<span>·</span>
+											<span>{new Date(update.createdAt).toLocaleString()}</span>
+										</div>
+									</div>
+								</div>
+							))
+						)}
+					</div>
+					<Button onClick={() => setViewingTask(null)} variant="secondary" className="w-full rounded-xl">Close View</Button>
 				</DialogContent>
 			</Dialog>
 		</>
